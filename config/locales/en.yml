@@ -1,0 +1,9 @@
+en:
+  label_ckeditor5_image_button: "Image"
+  label_ckeditor5_upload: "Upload a new file"
+  label_ckeditor5_loading: "Loading..."
+  label_ckeditor5_no_files: "No files yet"
+  label_ckeditor5_delete: "Delete"
+  text_ckeditor5_delete_confirm: "Delete this file?"
+  label_ckeditor5_upload_error: "Upload failed"
+  label_ckeditor5_close: "Close"

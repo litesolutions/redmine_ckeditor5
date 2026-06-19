@@ -1,0 +1,8 @@
+<p>
+  <%= content_tag :label, l(:ckeditor5_toolbar, :default => "Toolbar items (space separated)") %>
+  <%= text_field_tag "settings[toolbar]", RedmineCkeditor5Setting.toolbar_string, :size => 100 %>
+</p>
+<p>
+  <%= content_tag :label, l(:ckeditor5_height, :default => "Editing area height (px)") %>
+  <%= text_field_tag "settings[height]", RedmineCkeditor5Setting.height %>
+</p>

@@ -1,0 +1,9 @@
+es:
+  label_ckeditor5_image_button: "Imagen"
+  label_ckeditor5_upload: "Subir un fichero nuevo"
+  label_ckeditor5_loading: "Cargando..."
+  label_ckeditor5_no_files: "Todavía no hay ficheros"
+  label_ckeditor5_delete: "Eliminar"
+  text_ckeditor5_delete_confirm: "¿Eliminar este fichero?"
+  label_ckeditor5_upload_error: "Error al subir el fichero"
+  label_ckeditor5_close: "Cerrar"

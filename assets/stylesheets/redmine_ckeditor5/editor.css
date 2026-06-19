@@ -1,0 +1,110 @@
+/*
+ * CKEditor 4 rendered its editable content inside an <iframe>, isolated from
+ * Redmine's own CSS. CKEditor 5 (classic build) renders straight into the
+ * page DOM, so when the editor sits inside a Redmine form with class
+ * "tabular" (issues, wiki pages, ...), Redmine's own `.tabular p` rule
+ * (margin/padding/clear meant for label+field rows) leaks into the editor's
+ * paragraphs. Reset it back to normal paragraph flow inside the editor only.
+ */
+.tabular .ck-content p {
+  margin: 0 0 1em;
+  padding: 0;
+  min-height: 0;
+  clear: none;
+  overflow: visible;
+}
+
+.redmine-ckeditor5-file-browser {
+  width: 80vw;
+  max-width: 900px;
+  height: 70vh;
+  max-height: 600px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.redmine-ckeditor5-file-browser header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75em 1em;
+  border-bottom: 1px solid #ddd;
+  background: #f5f5f5;
+}
+
+.redmine-ckeditor5-file-browser header form {
+  margin: 0;
+}
+
+.redmine-ckeditor5-file-browser .close {
+  border: none;
+  background: none;
+  font-size: 1.4em;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.redmine-ckeditor5-file-browser .body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1em;
+}
+
+.redmine-ckeditor5-file-browser ul.files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5em;
+}
+
+.redmine-ckeditor5-file-browser ul.files li {
+  position: relative;
+  width: 120px;
+  text-align: center;
+  font-size: 0.85em;
+  word-break: break-all;
+}
+
+.redmine-ckeditor5-file-browser ul.files li img {
+  max-width: 110px;
+  max-height: 110px;
+  display: block;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+.redmine-ckeditor5-file-browser ul.files li.nodata {
+  cursor: default;
+  width: auto;
+}
+
+.redmine-ckeditor5-file-browser ul.files li .delete {
+  position: absolute;
+  top: -8px;
+  right: 4px;
+  border: none;
+  border-radius: 50%;
+  background: #c0392b;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.redmine-ckeditor5-file-browser .button.upload {
+  display: inline-block;
+  padding: 0.4em 0.8em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #fff;
+}

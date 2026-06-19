@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - test
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --force --tags origin
+
+      - name: Compute release tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          series="$(tr -d '[:space:]' < VERSION)"
+          if [[ ! "$series" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "VERSION must contain major.minor, for example 1.5"
+            exit 1
+          fi
+
+          escaped_series="${series//./\\.}"
+          branch="${GITHUB_REF_NAME}"
+
+          if [[ "$branch" == "main" ]]; then
+            skip_pattern="^v${escaped_series}\.[0-9]+$"
+          elif [[ "$branch" == "test" ]]; then
+            skip_pattern="^v${escaped_series}\.[0-9]+(-rc[0-9]+)?$"
+          else
+            echo "Branch not supported: ${branch}"
+            exit 1
+          fi
+
+          existing_tag="$(git tag --points-at "${GITHUB_SHA}" | grep -E "${skip_pattern}" | head -n 1 || true)"
+          if [[ -n "$existing_tag" ]]; then
+            echo "The current commit already has a release tag: ${existing_tag}"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "tag_name=${existing_tag}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          stable_patches="$(
+            git tag -l "v${series}.*" |
+            grep -E "^v${escaped_series}\.[0-9]+$" |
+            sed -E "s/^v${escaped_series}\.([0-9]+)$/\1/" |
+            sort -n ||
+            true
+          )"
+
+          latest_stable_patch="-1"
+          if [[ -n "$stable_patches" ]]; then
+            latest_stable_patch="$(printf '%s\n' "$stable_patches" | tail -n 1)"
+          fi
+
+          next_stable_patch=$((latest_stable_patch + 1))
+
+          if [[ "$branch" == "main" ]]; then
+            tag_name="v${series}.${next_stable_patch}"
+            prerelease="false"
+          elif [[ "$branch" == "test" ]]; then
+            rc_builds="$(
+              git tag -l "v${series}.${next_stable_patch}-rc*" |
+              grep -E "^v${escaped_series}\.${next_stable_patch}-rc[0-9]+$" |
+              sed -E "s/^v${escaped_series}\.${next_stable_patch}-rc([0-9]+)$/\1/" |
+              sort -n ||
+              true
+            )"
+
+            latest_rc_build="0"
+            if [[ -n "$rc_builds" ]]; then
+              latest_rc_build="$(printf '%s\n' "$rc_builds" | tail -n 1)"
+            fi
+
+            next_rc_build=$((latest_rc_build + 1))
+            tag_name="v${series}.${next_stable_patch}-rc${next_rc_build}"
+            prerelease="true"
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin package
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          git archive --format=zip \
+            --prefix=redmine_ckeditor5/ \
+            -o "redmine_ckeditor5-${{ steps.version.outputs.tag_name }}.zip" \
+            HEAD
+
+      - name: Create GitHub release
+        if: steps.version.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.version.outputs.tag_name }}
+          generate_release_notes: true
+          prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
+          files: redmine_ckeditor5-${{ steps.version.outputs.tag_name }}.zip

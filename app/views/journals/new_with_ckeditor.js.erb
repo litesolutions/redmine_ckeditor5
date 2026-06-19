@@ -1,0 +1,9 @@
+<%
+  # when quoting a private journal, check the private checkbox
+  if @journal && @journal.private_notes?
+%>
+$('#issue_private_notes').attr('checked', true);
+<% end %>
+
+RedmineCkeditor5.setData('issue_notes', <%= @content.inspect.html_safe %>);
+showAndScrollTo("update", "issue_notes");
