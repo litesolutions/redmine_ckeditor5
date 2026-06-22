@@ -394,6 +394,14 @@ RC5.init = function (textareaId, options) {
         });
       }
 
+      // Redmine refreshes the new-issue form via AJAX (e.g. on tracker,
+      // status or category change) by serializing the form directly,
+      // without firing its 'submit' event. Keep the textarea live-synced
+      // so that path picks up the current content too, not just real submits.
+      editor.model.document.on('change:data', function () {
+        editor.updateSourceElement();
+      });
+
       return editor;
     });
   });
