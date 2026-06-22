@@ -12,7 +12,11 @@ module RedmineCkeditor5::WikiFormatting
       text = @text.gsub(/<pre>\s*(.*?)\s*<\/pre>/m) {|m|
         content = if matched = $1.match(/<code\s+class="(\w+)">[\r\n]*(.*?)[\r\n]*<\/code>/m)
           lang, code = matched.captures
-          code = Redmine::SyntaxHighlighting.highlight_by_language(code, lang)
+          # `code` is the stored HTML, already entity-escaped (e.g. "&lt;div&gt;").
+          # Redmine::SyntaxHighlighting expects raw source text and escapes it
+          # itself, so without decoding first, "&lt;" would be escaped a
+          # second time into "&amp;lt;" and show up literally on the page.
+          code = Redmine::SyntaxHighlighting.highlight_by_language(CGI.unescapeHTML(code), lang)
           %Q[<pre>\n<code class="#{lang} syntaxhl">#{code}</code>\n</pre>]
         else
           m
