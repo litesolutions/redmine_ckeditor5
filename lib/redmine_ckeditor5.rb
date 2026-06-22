@@ -35,7 +35,7 @@ module RedmineCkeditor5
         undo redo | findAndReplace | heading
         | bold italic underline strikethrough subscript superscript removeFormat
         | fontFamily fontSize fontColor fontBackgroundColor | alignment
-        | bulletedList numberedList | outdent indent | blockQuote insertTable horizontalLine
+        | bulletedList numberedList | outdent indent | blockQuote codeBlock insertTable horizontalLine
         | link richImage
         | showBlocks sourceEditing
       ].join(" ")

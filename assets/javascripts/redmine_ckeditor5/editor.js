@@ -34,7 +34,10 @@ import {
   FindAndReplace,
   ShowBlocks,
   SourceEditing,
-  GeneralHtmlSupport
+  GeneralHtmlSupport,
+  CodeBlock,
+  PasteFromOffice,
+  Autoformat
 } from './vendor/ckeditor5.js';
 
 var BROWSE_ICON = '<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">' +
@@ -76,11 +79,12 @@ var PLUGINS = [
   Essentials, Paragraph, Heading,
   Bold, Italic, Underline, Strikethrough, Subscript, Superscript, RemoveFormat,
   Font, Alignment,
-  List, Indent, IndentBlock, BlockQuote,
+  List, Indent, IndentBlock, BlockQuote, CodeBlock,
   Table, TableToolbar, TableProperties, TableCellProperties, HorizontalLine,
   Link,
   Image, ImageUpload, ImageToolbar, ImageCaption, ImageStyle, ImageResize, LinkImage,
   FindAndReplace, ShowBlocks, SourceEditing, GeneralHtmlSupport,
+  PasteFromOffice, Autoformat,
   RichImagePlugin
 ];
 
@@ -89,6 +93,42 @@ var HTML_SUPPORT = {
     { name: /^(div|span|figure|figcaption)$/, styles: true, classes: true, attributes: true }
   ]
 };
+
+// CKEditor 5's CodeBlock plugin defaults to "language-xxx" classes on <code>,
+// but Redmine's own formatter (and the legacy CKEditor 4 plugin) stores and
+// reads back a bare class equal to the Rouge lexer name, e.g.
+// <pre><code class="ruby">. Without this, CKEditor 5 doesn't recognize
+// existing <pre><code class="ruby"> content as a code block at all, and
+// flattens it on load. Map the languages most likely to show up in existing
+// content to that same bare class name, so both old and new content survive
+// a round trip. Add more entries here if a language used in your wiki/issues
+// content is missing.
+var CODE_BLOCK_LANGUAGES = [
+  { language: 'plaintext', label: 'Plain text', class: '' },
+  { language: 'ruby', label: 'Ruby', class: 'ruby' },
+  { language: 'python', label: 'Python', class: 'python' },
+  { language: 'javascript', label: 'JavaScript', class: 'javascript' },
+  { language: 'typescript', label: 'TypeScript', class: 'typescript' },
+  { language: 'json', label: 'JSON', class: 'json' },
+  { language: 'yaml', label: 'YAML', class: 'yaml' },
+  { language: 'xml', label: 'XML', class: 'xml' },
+  { language: 'html', label: 'HTML', class: 'html' },
+  { language: 'css', label: 'CSS', class: 'css' },
+  { language: 'sql', label: 'SQL', class: 'sql' },
+  { language: 'bash', label: 'Shell', class: 'bash' },
+  { language: 'shell', label: 'Shell (shell)', class: 'shell' },
+  { language: 'diff', label: 'Diff', class: 'diff' },
+  { language: 'java', label: 'Java', class: 'java' },
+  { language: 'c', label: 'C', class: 'c' },
+  { language: 'cpp', label: 'C++', class: 'cpp' },
+  { language: 'csharp', label: 'C#', class: 'csharp' },
+  { language: 'go', label: 'Go', class: 'go' },
+  { language: 'php', label: 'PHP', class: 'php' },
+  { language: 'perl', label: 'Perl', class: 'perl' },
+  { language: 'ini', label: 'INI', class: 'ini' },
+  { language: 'dockerfile', label: 'Dockerfile', class: 'dockerfile' },
+  { language: 'markdown', label: 'Markdown', class: 'markdown' }
+];
 
 var RC5 = window.RedmineCkeditor5;
 RC5.instances = {};
@@ -198,7 +238,7 @@ RC5.openRichImageDialog = function (editor, options) {
   dialog.innerHTML =
     '<header>' +
       '<label class="button upload">' + (options.uploadLabel || 'Upload a new file') +
-        '<input type="file" hidden></label>' +
+        '<input type="file" accept="image/*" hidden></label>' +
       '<form method="dialog"><button type="submit" class="close" title="' +
         (options.closeLabel || 'Close') + '">&times;</button></form>' +
     '</header>' +
@@ -291,9 +331,24 @@ function loadTranslations(translationFile) {
     .catch(function () { return []; });
 }
 
+// CKEditor 5's CodeBlock feature only recognizes <pre><code>...</code></pre>;
+// a bare <pre> with no <code> child (which is what plain preformatted blocks
+// look like, e.g. content typed without picking a language) is invisible to
+// it and gets flattened on load. Wrap those so CodeBlock claims them too.
+function ensureCodeBlocksHaveCode(html) {
+  return html.replace(/<pre\b[^>]*>(?!\s*<code\b)([\s\S]*?)<\/pre>/gi, function (match, inner) {
+    // Per the HTML spec, browsers drop a single leading newline right after
+    // <pre>; CKEditor 5 doesn't, so without this it shows as a blank line.
+    inner = inner.replace(/^\r?\n/, '');
+    return '<pre><code class="plaintext">' + inner + '</code></pre>';
+  });
+}
+
 RC5.init = function (textareaId, options) {
   var textarea = document.getElementById(textareaId);
   if (!textarea) return;
+
+  textarea.value = ensureCodeBlocksHaveCode(textarea.value);
 
   return loadTranslations(options.translationFile).then(function (translations) {
     return ClassicEditor.create(textarea, {
@@ -313,6 +368,9 @@ RC5.init = function (textareaId, options) {
       },
       table: {
         contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties']
+      },
+      codeBlock: {
+        languages: CODE_BLOCK_LANGUAGES
       }
     }).then(function (editor) {
       RC5.instances[textareaId] = editor;
@@ -343,7 +401,7 @@ RC5.init = function (textareaId, options) {
 
 RC5.setData = function (textareaId, html) {
   var editor = RC5.instances[textareaId];
-  if (editor) editor.setData(html);
+  if (editor) editor.setData(ensureCodeBlocksHaveCode(html));
 };
 
 RC5.showAndScrollTo = function (id, focusId) {
