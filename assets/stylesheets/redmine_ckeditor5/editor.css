@@ -14,6 +14,18 @@
   overflow: visible;
 }
 
+/*
+ * CKEditor 5 positions the link balloon's wrapper based on the viewport
+ * space available near the selected element/cursor, not on the width the
+ * link form itself declares (--ck-link-panel-width, see vendor CSS). Near a
+ * page edge that calculation can leave the wrapper narrower than the form,
+ * squeezing its "display text"/"URL" inputs. Force a floor matching the
+ * form's own declared width so it never gets that cramped.
+ */
+.ck-balloon-rotator__content:has(.ck-link-form) {
+  min-width: var(--ck-link-panel-width, 340px);
+}
+
 .redmine-ckeditor5-file-browser {
   width: 80vw;
   max-width: 900px;
