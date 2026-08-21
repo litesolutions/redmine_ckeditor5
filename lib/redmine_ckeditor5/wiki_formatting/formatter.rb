@@ -3,7 +3,7 @@ module RedmineCkeditor5::WikiFormatting
     include Redmine::WikiFormatting::LinksHelper
     include ActionView::Helpers::SanitizeHelper
 
-    def initialize(text)
+    def initialize(text, options)
       @text = text
     end
 
