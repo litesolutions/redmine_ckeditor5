@@ -18,8 +18,9 @@ CKEditor 5, so no external CDN is required at runtime.
 
 ## Requirements
 
-* Redmine 6.x (built and tested against 6.1.2). It relies on Redmine's
-  Propshaft asset pipeline and may not work on older Redmine versions.
+* Redmine 6.x or 7.x (built and tested against 6.1.2 and 7.0.1).
+  It relies on Redmine's Propshaft asset pipeline
+  and may not work on older Redmine versions.
 * Ruby on Rails 7.2 (the version Redmine 6 ships with) — the plugin uses
   [kt-paperclip](https://github.com/kreeti/kt-paperclip) instead of the
   original `paperclip` gem because `paperclip` is unmaintained and
@@ -37,9 +38,10 @@ CKEditor 5, so no external CDN is required at runtime.
     cd plugins
     git clone https://github.com/litesolutions/redmine_ckeditor5.git redmine_ckeditor5
     ```
-2. Install the required gems (in the Redmine root directory):
+2. Install the required gems and migrate database(in the Redmine root directory):
     ```
     bundle install --without development test
+    rake redmine:plugins:migrate RAILS_ENV=production
     ```
 3. Restart Redmine.
 4. Change the text formatting (Administration > Settings > General > Text
@@ -54,18 +56,23 @@ no separate asset precompilation or `rake` task is required.
 ### Upgrade
 
 1. Replace the plugin directory (`plugins/redmine_ckeditor5`).
-2. Install the required gems:
+2. Install the required gems and migrate database:
     ```
     bundle install --without development test
+    rake redmine:plugins:migrate RAILS_ENV=production
     ```
 3. Restart Redmine.
 
 ### Uninstall
 
-1. Change the text formatting (Administration > Settings > General > Text
+1. Remove this plugin's created database tables:
+    ```
+   bundle exec rake redmine:plugins:migrate NAME=redmine_ckeditor5 VERSION=0 RAILS_ENV=production
+    ```
+2. Change the text formatting (Administration > Settings > General > Text
    formatting) to your formatter of choice (e.g. Markdown).
-2. Delete the plugin directory (`plugins/redmine_ckeditor5`).
-3. Remove `public/plugin_assets/redmine_ckeditor5` if you want to clean up
+3. Delete the plugin directory (`plugins/redmine_ckeditor5`).
+4. Remove `public/plugin_assets/redmine_ckeditor5` if you want to clean up
    the mirrored assets.
 
 ## CKEditor customization
