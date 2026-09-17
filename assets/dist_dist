@@ -1,0 +1,7 @@
+#!/bin/bash -x
+
+if [ -d dist ]; then
+	cp -v dist/browser/*.{js,js.map} javascripts/redmine_ckeditor5/vendor/
+	cp -v dist/translations/* javascripts/redmine_ckeditor5/vendor/translations/
+	cp -v dist/browser/*.{css,css.map} stylesheets/redmine_ckeditor5/
+fi
